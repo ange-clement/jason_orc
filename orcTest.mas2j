@@ -1,0 +1,31 @@
+/*
+    orcTest
+    ---------------------------
+
+    Jason Project File
+
+    This file defines the initial state of the MAS
+
+    Jason 2.5.1
+    octobre 04, 2022 - 15:43:32
+*/
+
+MAS orcTest {
+
+    infrastructure: Centralised
+
+    environment: Arena
+
+    agents:
+		orc0 /home/e20180000463/POASMA/orcTest/orc.asl;
+		orc1 /home/e20180000463/POASMA/orcTest/orc.asl;
+		orc2 /home/e20180000463/POASMA/orcTest/orc.asl;
+		orc3 /home/e20180000463/POASMA/orcTest/orc.asl;
+		orc4 /home/e20180000463/POASMA/orcTest/orc.asl;
+		orc5 /home/e20180000463/POASMA/orcTest/orc.asl;
+		orc6 /home/e20180000463/POASMA/orcTest/orc.asl;
+		orc7 /home/e20180000463/POASMA/orcTest/orc.asl;
+		orc8 /home/e20180000463/POASMA/orcTest/orc.asl;
+		orc9 /home/e20180000463/POASMA/orcTest/orc.asl;
+
+}
