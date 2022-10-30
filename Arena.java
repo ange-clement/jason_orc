@@ -45,6 +45,7 @@ public class Arena extends Environment {
 		percepts = new ArrayList<>();
 		percepts.add(new PositionPercept());
 		percepts.add(new TargetPercept());
+		percepts.add(new HPPercept());
 		
 		orcs = new ArrayList<>();
 		for (int i = 0; i < nbOrcs; i++) {
