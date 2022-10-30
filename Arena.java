@@ -12,19 +12,19 @@ public class Arena extends Environment {
 
     private Logger logger = Logger.getLogger("orcTest.mas2j."+Arena.class.getName());
 	
-	private ArenaGraphics graphics;
-	private ArrayList<OrcGraphics> orcs;
+	private long previousFrame;
 	
-	public static final String mv = "move";
-	public static final String tg = "target";
-	public static final String ft = "follow_target";
-	/*
-    public static final Term    pg = Literal.parseLiteral("pick(garb)");
-    public static final Term    dg = Literal.parseLiteral("drop(garb)");
-    public static final Term    bg = Literal.parseLiteral("burn(garb)");
-    public static final Literal g1 = Literal.parseLiteral("garbage(r1)");
-    public static final Literal g2 = Literal.parseLiteral("garbage(r2)");
-	*/
+	private ArenaGraphics graphics;
+	private ArrayList<Orc> orcs;
+	private TextZone text;
+	private int wantedFPS = 60;
+	private long moyFPS = 0;
+	private int waitToShowFPS;
+	
+	private ArrayList<Action> actions;
+	private ArrayList<GlobalPercept> percepts;
+	
+	public static final String per_id = "id";
 	
 	private int nbOrcs = 10;
 
@@ -34,63 +34,64 @@ public class Arena extends Environment {
         super.init(args);
 		
 		graphics = new ArenaGraphics(500, 500);
+		text = new TextZone(10, 20, "alo?");
+		graphics.addDrawable(text);
+		
+		actions = new ArrayList<>();
+		actions.add(new Move());
+		actions.add(new ChangeTarget());
+		actions.add(new SetFollowTarget());
+		
+		percepts = new ArrayList<>();
+		percepts.add(new PositionPercept());
+		percepts.add(new TargetPercept());
 		
 		orcs = new ArrayList<>();
 		for (int i = 0; i < nbOrcs; i++) {
-			orcs.add(new OrcGraphics(i%5 * 10 + 225, i/5 * 50 + 225, 5));
+			orcs.add(new Orc(i, i%5 * 10 + 225, i/5 * 50 + 225, 5));
 			graphics.addDrawable(orcs.get(i));
 			
-			
-			addPercept("orc"+i, Literal.parseLiteral("id(" + i + ")"));
+			addPercept("orc"+i, Literal.parseLiteral(per_id+"(" + i + ")"));
 		}
 		
 		updatePercepts();
+		
+		previousFrame = System.currentTimeMillis();
     }
 
     @Override
     public boolean executeAction(String ag, Structure action) {
-        // logger.info("executing: "+action+", but not implemented!");
-        // if (true) { // you may improve this condition
-        //      informAgsEnvironmentChanged();
-        // }
-        // return true; // the action was executed with success
-		
-		//orcs.forEach(o -> o.draw());
-		
-		logger.info(ag+" doing: "+ action);
-		
-		OrcGraphics o = orcs.get(Integer.parseInt(""+ag.charAt(3)));
-		
+		Orc o = orcs.get(Integer.parseInt(""+ag.charAt(3)));
 		
         try {
-			if (action.getFunctor().equals(mv)) {
-                int x = (int)((NumberTerm)action.getTerm(0)).solve();
-                int y = (int)((NumberTerm)action.getTerm(1)).solve();
-				
-				o.move(x, y);
-            } else if (action.getFunctor().equals(tg)) {
-                int x = (int)((NumberTerm)action.getTerm(0)).solve();
-                int y = (int)((NumberTerm)action.getTerm(1)).solve();
-				
-				o.target(x, y);
-            } else if (action.getFunctor().equals(ft)) {
-				boolean val = (int)((NumberTerm)action.getTerm(0)).solve() > 0;
-				
-				o.setFollowTarget(val);
-            } else {
-                return false;
-            }
+			for (int i = 0; i < actions.size(); i++) {
+				if (actions.get(i).correspondsTo(action)) {
+					actions.get(i).execute(ag, action, o);
+				}
+			}
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         update();
 
-		if (ag.equals("orc0")) {
-			try {
-				Thread.sleep(16);
-			} catch (Exception e) {}
-		}
+		long curtime = System.currentTimeMillis();
+		long time = curtime - previousFrame;
+		previousFrame = curtime;
+		
+		try {
+			int waitTime = (int)Math.max(0, (1000 / wantedFPS) - time);
+			if (waitToShowFPS < 0) {
+				waitToShowFPS = wantedFPS;
+				text.text = "fps : "+ (1000 * wantedFPS / (float)moyFPS);
+				moyFPS = 0;
+			}
+			else {
+				waitToShowFPS--;
+				moyFPS += (time+waitTime);
+			}
+			Thread.sleep(waitTime);
+		} catch (Exception e) {}
         informAgsEnvironmentChanged();
         return true;
     }
@@ -106,16 +107,13 @@ public class Arena extends Environment {
 	}
 	
 	private void updatePercepts() {
-        clearPercepts();
-		
-		removePerceptsByUnif(Literal.parseLiteral("target"));
+		clearPercepts();
 		
 		for (int i = 0; i < orcs.size(); i++) {
-			OrcGraphics orc = orcs.get(i);
-			addPercept("orc"+i, Literal.parseLiteral("target(" + orc.targetX + "," + orc.targetY + ")"));
-			if (orc.followTarget)
-				addPercept("orc"+i, Literal.parseLiteral("following_target"));
-			addPercept(Literal.parseLiteral("pos("+i+"," + orc.posX + "," + orc.posY + ")"));
+			Orc orc = orcs.get(i);
+			for (int j = 0; j < percepts.size(); j++) {
+				addPercept(percepts.get(j).construct(i, orc));
+			}
 		}
     }
 

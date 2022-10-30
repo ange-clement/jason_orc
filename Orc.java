@@ -3,7 +3,9 @@ import java.awt.event.*;
 
 import javax.swing.*;
 
-public class OrcGraphics implements Drawable {
+public class Orc implements Drawable {
+	
+	public int id;
 	
 	public int posX;
 	public int posY;
@@ -14,7 +16,9 @@ public class OrcGraphics implements Drawable {
 	public int targetX;
 	public int targetY;
 	
-	public OrcGraphics(int posX , int posY, int size) {
+	public Orc(int id, int posX, int posY, int size) {
+		this.id = id;
+		
 		this.posX = posX;
 		this.posY = posY;
 		this.size = size;
@@ -27,16 +31,13 @@ public class OrcGraphics implements Drawable {
 	@Override
 	public void draw(Graphics2D ctx) {		
 		ctx.drawOval(posX - size, posY - size, 2*size, 2*size);
+		ctx.drawString(""+id, posX - size, posY + 3*size);
 	}
 	
 	public void update() {
 		if (followTarget) {
 			moveTowardTarget();
 		}
-	}
-	
-	public int getFollowTarget() {
-		return followTarget ? 1 : 0;
 	}
 	
 	
@@ -62,7 +63,7 @@ public class OrcGraphics implements Drawable {
 		double dx = targetX - posX;
 		double dy = targetY - posY;
 		double dist = dx*dx+dy*dy;
-		dist = 1.0 / (dist * dist);
+		dist = 1.0 / Math.sqrt(dist);
 		dx = dx * dist;
 		dy = dy * dist;
 		
@@ -73,16 +74,12 @@ public class OrcGraphics implements Drawable {
 			x = 1;
 		} else if (dx < Math.cos(angle * 5)) {
 			x = -1;
-		} else {
-			x = 0;
 		}
 		
 		if (dy > Math.sin(angle)) {
 			y = 1;
 		} else if (dy < Math.sin(-angle)) {
-			x = -1;
-		} else {
-			x = 0;
+			y = -1;
 		}
 		
 		move(x, y);
