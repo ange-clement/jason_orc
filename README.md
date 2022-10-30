@@ -16,5 +16,6 @@ Ce projet est issu d'une traduction d'un [précédent projet sur les Orcs](https
 Nous avons mis en place une traduction du projet <b>Orc<b> en <b>Jason<b>. Ce projet comprend donc une grande majorité de code en <b>Java<b> et <b>Jason<b>.
 Nous nous sommes basé sur la documentation que nous avons trouvé sur ces différents sites :
 </p>
-- [lien sourceforge](https://jason.sourceforge.net/doc/)
-- [site officiel](https://jason.sourceforge.net/wp/documents/)
+
+- [lien sourceforge](https://jason.sourceforge.net/doc/).
+- [site officiel](https://jason.sourceforge.net/wp/documents/).
