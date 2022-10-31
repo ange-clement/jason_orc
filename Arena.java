@@ -3,10 +3,12 @@
 import jason.asSyntax.*;
 import jason.environment.*;
 import jason.asSyntax.parser.*;
+import jason.NoValueException;
 
 import java.util.logging.*;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class Arena extends Environment {
 
@@ -26,7 +28,8 @@ public class Arena extends Environment {
 	
 	public static final String per_id = "id";
 	
-	private int nbOrcs = 10;
+	private int nbOrcs = 5;
+	private boolean started;
 
     /** Called before the MAS execution with the args informed in .mas2j */
     @Override
@@ -41,40 +44,59 @@ public class Arena extends Environment {
 		actions.add(new Move());
 		actions.add(new ChangeTarget());
 		actions.add(new SetFollowTarget());
+		actions.add(new Hit());
 		
 		percepts = new ArrayList<>();
 		percepts.add(new PositionPercept());
 		percepts.add(new TargetPercept());
 		percepts.add(new HPPercept());
+		percepts.add(new ClosestPercept());
 		
 		orcs = new ArrayList<>();
 		for (int i = 0; i < nbOrcs; i++) {
-			orcs.add(new Orc(i, i%5 * 10 + 225, i/5 * 50 + 225, 5));
+			orcs.add(new Orc(i, 250 + (int)(50*Math.cos(i*2*3.141592635/nbOrcs)), 250 + (int)(50*Math.sin(i*2*3.141592635/nbOrcs)), 5, 450, 450));
 			graphics.addDrawable(orcs.get(i));
-			
-			addPercept("orc"+i, Literal.parseLiteral(per_id+"(" + i + ")"));
 		}
-		
 		updatePercepts();
+		addPercept(Literal.parseLiteral("nbCreateOrc(" + (nbOrcs-1) + ")"));
+		
+		started = false;
 		
 		previousFrame = System.currentTimeMillis();
     }
 
     @Override
     public boolean executeAction(String ag, Structure action) {
-		Orc o = orcs.get(Integer.parseInt(""+ag.charAt(3)));
+		if (ag.equals("orcGenerator")) {
+			if (action.getFunctor().equals("addOrc")) {
+				int i = 0;
+				try {
+					i = (int)((NumberTerm)action.getTerm(0)).solve();	
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				
+				addPercept(""+i, Literal.parseLiteral(per_id+"(" + i + ")"));
+				
+				return true;
+			}
+			return false;
+		}
+		
+		Orc o = orcs.get(Integer.parseInt(ag));
 		
         try {
 			for (int i = 0; i < actions.size(); i++) {
 				if (actions.get(i).correspondsTo(action)) {
-					actions.get(i).execute(ag, action, o);
+					actions.get(i).execute(ag, action, o, orcs);
 				}
 			}
-        } catch (Exception e) {
+        } catch (NoValueException e) {
             e.printStackTrace();
         }
-
+		
         update();
+		
 
 		long curtime = System.currentTimeMillis();
 		long time = curtime - previousFrame;
@@ -113,7 +135,7 @@ public class Arena extends Environment {
 		for (int i = 0; i < orcs.size(); i++) {
 			Orc orc = orcs.get(i);
 			for (int j = 0; j < percepts.size(); j++) {
-				addPercept(percepts.get(j).construct(i, orc));
+				addPercept(percepts.get(j).construct(i, orc, orcs));
 			}
 		}
     }
